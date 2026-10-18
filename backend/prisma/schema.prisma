@@ -18,6 +18,7 @@ model User {
   updatedAt    DateTime  @updatedAt
 
   sessions     Session[]
+  gitHubAccount GitHubAccount?
 
   @@map("users")
 }
@@ -191,4 +192,24 @@ model Report {
   updatedAt          DateTime @updatedAt
 
   @@map("reports")
+}
+
+model GitHubAccount {
+  id             String    @id @default(cuid())
+  userId         String    @unique
+  user           User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  githubId       String    @unique
+  username       String
+  displayName    String?
+  avatarUrl      String?
+  profileUrl     String?
+  accessToken    String    // Securely stored on backend only
+  scope          String?
+  selectedRepo   String?   // e.g. "octocat/Hello-World"
+  selectedBranch String?   // e.g. "main"
+  repoMetadata   String?   // JSON string of repo details (stars, language, visibility, etc.)
+  connectedAt    DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+
+  @@map("github_accounts")
 }

@@ -2,8 +2,11 @@ import {
   ChevronLeft,
   ClipboardList,
   FileSearch,
+  Github,
   LayoutDashboard,
   LayoutList,
+  LogIn,
+  LogOut,
   MessageSquare,
   PanelLeftClose,
   PanelLeftOpen,
@@ -11,6 +14,7 @@ import {
   X,
 } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
+import type { AuthUserProfile } from '../lib/api';
 import type { CandidateInfo, NavItemId } from '../types/assessment';
 
 interface NavItem {
@@ -37,6 +41,12 @@ interface SidebarProps {
   drawer?: boolean;
   collapsed?: boolean;
   onToggleCollapse?: () => void;
+  currentUser?: AuthUserProfile | null;
+  onOpenAuth?: () => void;
+  onLogout?: () => void;
+  onOpenGitHub?: () => void;
+  isGitHubConnected?: boolean;
+  githubUsername?: string | null;
 }
 
 export function Sidebar({
@@ -48,6 +58,12 @@ export function Sidebar({
   drawer = false,
   collapsed = false,
   onToggleCollapse,
+  currentUser,
+  onOpenAuth,
+  onLogout,
+  onOpenGitHub,
+  isGitHubConnected = false,
+  githubUsername,
 }: SidebarProps) {
   return (
     <div className="flex h-full w-full flex-col bg-nav-bg">
@@ -58,7 +74,7 @@ export function Sidebar({
         }`}
       >
         <span
-          className="flex h-8 w-8 shrink-0 items-center justify-center rounded-[8px] bg-accent text-white"
+          className="flex h-8 w-8 shrink-0 items-center justify-center rounded-[8px] bg-accent text-white shadow-sm"
           title="PROOF Assessment Platform"
         >
           <ShieldCheck size={18} strokeWidth={2.2} aria-hidden="true" />
@@ -85,16 +101,29 @@ export function Sidebar({
 
       {/* Candidate summary */}
       {collapsed ? (
-        <div className="flex justify-center p-3">
+        <div className="flex flex-col items-center gap-2 p-3">
           <span
             className="flex h-9 w-9 cursor-pointer items-center justify-center rounded-full bg-nav-active text-[12px] font-bold text-nav-text transition-colors hover:bg-accent"
             title={`${candidate.name} · ${candidate.role} (${candidate.status})`}
           >
             {candidate.initials}
           </span>
+          {onOpenGitHub ? (
+            <button
+              type="button"
+              onClick={onOpenGitHub}
+              title={isGitHubConnected ? `GitHub: @${githubUsername || 'connected'}` : 'Connect GitHub'}
+              className="relative flex h-8 w-8 items-center justify-center rounded-[6px] text-nav-muted hover:bg-nav-hover hover:text-nav-text"
+            >
+              <Github size={16} />
+              {isGitHubConnected ? (
+                <span className="absolute bottom-1 right-1 h-2 w-2 rounded-full bg-success ring-1 ring-nav-bg" />
+              ) : null}
+            </button>
+          ) : null}
         </div>
       ) : (
-        <div className="mx-3 mb-3 mt-3 rounded-[8px] border border-nav-line bg-nav-header/70 p-3.5">
+        <div className="mx-3 mb-2 mt-3 rounded-[8px] border border-nav-line bg-nav-header/70 p-3.5">
           <div className="flex items-center gap-3">
             <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-nav-active text-[12px] font-bold text-nav-text">
               {candidate.initials}
@@ -117,7 +146,34 @@ export function Sidebar({
             </span>
           </div>
 
-          <dl className="mt-3 space-y-1.5 border-t border-nav-line pt-3 text-[12px]">
+          {/* GitHub Connection Banner */}
+          {onOpenGitHub ? (
+            <div className="mt-3 pt-2.5 border-t border-nav-line">
+              <button
+                type="button"
+                onClick={onOpenGitHub}
+                className={`flex w-full items-center justify-between rounded-[6px] px-2.5 py-1.5 text-[12px] font-medium transition-colors ${
+                  isGitHubConnected
+                    ? 'bg-nav-hover text-nav-text hover:bg-nav-active'
+                    : 'border border-dashed border-nav-line text-nav-muted hover:border-nav-hover hover:text-nav-text'
+                }`}
+              >
+                <span className="flex items-center gap-1.5 truncate">
+                  <Github size={14} className="shrink-0" />
+                  <span className="truncate">
+                    {isGitHubConnected ? `@${githubUsername || 'connected'}` : 'Connect GitHub'}
+                  </span>
+                </span>
+                <span
+                  className={`h-2 w-2 shrink-0 rounded-full ${
+                    isGitHubConnected ? 'bg-success' : 'bg-muted/40'
+                  }`}
+                />
+              </button>
+            </div>
+          ) : null}
+
+          <dl className="mt-2.5 space-y-1.5 border-t border-nav-line pt-2 text-[12px]">
             <div className="flex items-baseline justify-between gap-2">
               <dt className="shrink-0 text-nav-muted">Started</dt>
               <dd className="truncate font-medium text-nav-text">{candidate.startedAt}</dd>
@@ -146,7 +202,7 @@ export function Sidebar({
                 <button
                   type="button"
                   onClick={() => onNavSelect(item.id)}
-                  title={item.label}
+                  title={`${item.label} (Press ${item.shortcut})`}
                   aria-current={active ? 'page' : undefined}
                   className={`flex w-full items-center rounded-[6px] text-left transition-colors focus-visible:ring-2 focus-visible:ring-accent ${
                     collapsed
@@ -187,14 +243,62 @@ export function Sidebar({
         </ul>
       </nav>
 
-      {/* Footer Actions */}
-      <div className="border-t border-nav-line p-2.5">
+      {/* User Session & Footer Actions */}
+      <div className="border-t border-nav-line p-2.5 space-y-1.5">
+        {currentUser ? (
+          !collapsed ? (
+            <div className="flex items-center justify-between rounded-[6px] bg-nav-header px-2.5 py-1.5 text-[12px]">
+              <div className="min-w-0 pr-2">
+                <p className="truncate font-semibold text-nav-text">{currentUser.name}</p>
+                <p className="truncate text-[11px] text-nav-muted capitalize">{currentUser.role}</p>
+              </div>
+              <button
+                type="button"
+                onClick={onLogout}
+                title="Sign Out"
+                className="rounded p-1 text-nav-muted hover:bg-nav-hover hover:text-nav-text"
+              >
+                <LogOut size={14} />
+              </button>
+            </div>
+          ) : (
+            <button
+              type="button"
+              onClick={onLogout}
+              title={`Sign Out (${currentUser.name})`}
+              className="flex min-h-[36px] w-full items-center justify-center rounded-[6px] text-nav-muted hover:bg-nav-hover hover:text-nav-text"
+            >
+              <LogOut size={16} />
+            </button>
+          )
+        ) : (
+          !collapsed ? (
+            <button
+              type="button"
+              onClick={onOpenAuth}
+              className="flex min-h-[36px] w-full items-center justify-center gap-2 rounded-[6px] bg-accent/20 border border-accent/40 px-3 py-1.5 text-[13px] font-semibold text-accent transition-colors hover:bg-accent hover:text-white"
+            >
+              <LogIn size={15} />
+              <span>Sign In / Register</span>
+            </button>
+          ) : (
+            <button
+              type="button"
+              onClick={onOpenAuth}
+              title="Sign In / Register"
+              className="flex min-h-[36px] w-full items-center justify-center rounded-[6px] text-accent hover:bg-nav-hover"
+            >
+              <LogIn size={16} />
+            </button>
+          )
+        )}
+
         {onToggleCollapse && !drawer ? (
           <button
             type="button"
             onClick={onToggleCollapse}
             title={collapsed ? 'Expand sidebar ( [ )' : 'Collapse sidebar ( [ )'}
-            className="mb-1.5 flex min-h-[36px] w-full items-center justify-center gap-2 rounded-[6px] px-2.5 py-1.5 text-[12px] font-medium text-nav-muted transition-colors hover:bg-nav-hover hover:text-nav-text focus-visible:ring-2 focus-visible:ring-accent"
+            className="flex min-h-[34px] w-full items-center justify-center gap-2 rounded-[6px] px-2.5 py-1 text-[12px] font-medium text-nav-muted transition-colors hover:bg-nav-hover hover:text-nav-text focus-visible:ring-2 focus-visible:ring-accent"
           >
             {collapsed ? (
               <PanelLeftOpen size={16} />
@@ -202,7 +306,7 @@ export function Sidebar({
               <>
                 <PanelLeftClose size={16} />
                 <span className="truncate">Collapse sidebar</span>
-                <kbd className="ml-auto rounded border border-nav-line bg-nav-header px-1.5 py-0.5 text-[12px] font-bold text-nav-muted">
+                <kbd className="ml-auto rounded border border-nav-line bg-nav-header px-1.5 py-0.5 text-[11px] font-bold text-nav-muted">
                   [
                 </kbd>
               </>
@@ -214,9 +318,9 @@ export function Sidebar({
           <button
             type="button"
             onClick={onBack}
-            className="flex min-h-[36px] w-full items-center justify-center gap-2 rounded-[6px] border border-nav-line bg-nav-header px-3 py-1.5 text-[13px] font-medium text-nav-muted transition-colors hover:border-nav-hover hover:bg-nav-hover hover:text-nav-text focus-visible:ring-2 focus-visible:ring-accent"
+            className="flex min-h-[34px] w-full items-center justify-center gap-2 rounded-[6px] border border-nav-line bg-nav-header px-3 py-1 text-[12px] font-medium text-nav-muted transition-colors hover:border-nav-hover hover:bg-nav-hover hover:text-nav-text focus-visible:ring-2 focus-visible:ring-accent"
           >
-            <ChevronLeft size={15} strokeWidth={2} aria-hidden="true" />
+            <ChevronLeft size={14} strokeWidth={2} aria-hidden="true" />
             Back to Assessments
           </button>
         ) : null}

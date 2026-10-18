@@ -392,6 +392,7 @@ export class SessionService {
       finding,
       graph,
       summary: metrics.summaryMetrics,
+      summaryMetrics: metrics.summaryMetrics,
     };
   }
 

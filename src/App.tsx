@@ -23,10 +23,16 @@ import { OverviewView } from './components/views/OverviewView';
 import { ReportsView } from './components/views/ReportsView';
 import { TestResultsView } from './components/views/TestResultsView';
 import { assessment as fallbackAssessment } from './data/assessment';
+import { AuthModal } from './components/auth/AuthModal';
+import { GitHubConnectModal } from './components/github/GitHubConnectModal';
 import {
+  apiGetCurrentUser,
+  apiGetGitHubStatus,
+  apiLogout,
   fetchAssessment,
   fetchAssessments,
   fetchShareLink,
+  type AuthUserProfile,
 } from './lib/api';
 import { exportReportPdf } from './lib/exportPdf';
 import { buildReportMarkdown, downloadTextFile } from './lib/exportReport';
@@ -107,9 +113,70 @@ export default function App() {
   const [toast, setToast] = useState<string | null>(null);
   const toastTimer = useRef<number | null>(null);
 
+  const showToast = useCallback((message: string) => {
+    setToast(message);
+    if (toastTimer.current !== null) window.clearTimeout(toastTimer.current);
+    toastTimer.current = window.setTimeout(() => setToast(null), 3000);
+  }, []);
+
+  useEffect(() => {
+    return () => {
+      if (toastTimer.current !== null) window.clearTimeout(toastTimer.current);
+    };
+  }, []);
+
   useEffect(() => {
     applyTheme(theme, false);
   }, [theme]);
+
+  // Auth & GitHub state
+  const [currentUser, setCurrentUser] = useState<AuthUserProfile | null>(null);
+  const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
+  const [isGitHubModalOpen, setIsGitHubModalOpen] = useState(false);
+  const [isGitHubConnected, setIsGitHubConnected] = useState(false);
+  const [githubUsername, setGithubUsername] = useState<string | null>(null);
+
+  const loadGitHubStatus = useCallback(async () => {
+    try {
+      const res = await apiGetGitHubStatus();
+      setIsGitHubConnected(res.connected);
+      if (res.account?.username) {
+        setGithubUsername(res.account.username);
+      }
+    } catch {
+      setIsGitHubConnected(false);
+    }
+  }, []);
+
+  const handleLogout = useCallback(async () => {
+    await apiLogout();
+    setCurrentUser(null);
+    setIsGitHubConnected(false);
+    setGithubUsername(null);
+    showToast('Successfully signed out');
+  }, [showToast]);
+
+  // Initial user profile & GitHub status check
+  useEffect(() => {
+    apiGetCurrentUser().then((user) => {
+      if (user) setCurrentUser(user);
+    });
+    loadGitHubStatus();
+
+    if (typeof window !== 'undefined') {
+      const params = new URLSearchParams(window.location.search);
+      const gh = params.get('github');
+      const ghErr = params.get('github_error');
+      if (gh === 'connected') {
+        showToast('GitHub account connected successfully!');
+        loadGitHubStatus();
+        window.history.replaceState({}, document.title, window.location.pathname + window.location.hash);
+      } else if (ghErr) {
+        showToast(`GitHub connection error: ${ghErr}`);
+        window.history.replaceState({}, document.title, window.location.pathname + window.location.hash);
+      }
+    }
+  }, [loadGitHubStatus, showToast]);
 
   // Live Data State
   const [currentSubmissionId, setCurrentSubmissionId] = useState<string>(
@@ -234,19 +301,6 @@ export default function App() {
   ]);
   const [isLoading, setIsLoading] = useState(false);
   const [isSwitcherOpen, setIsSwitcherOpen] = useState(false);
-
-  // Clean up toast timer
-  useEffect(() => {
-    return () => {
-      if (toastTimer.current !== null) window.clearTimeout(toastTimer.current);
-    };
-  }, []);
-
-  const showToast = useCallback((message: string) => {
-    setToast(message);
-    if (toastTimer.current !== null) window.clearTimeout(toastTimer.current);
-    toastTimer.current = window.setTimeout(() => setToast(null), 3000);
-  }, []);
 
   // Fetch assessment list for switcher
   useEffect(() => {
@@ -516,6 +570,12 @@ export default function App() {
       sidebarCollapsed={sidebarCollapsed}
       onToggleSidebar={() => setSidebarCollapsed((prev) => !prev)}
       onOpenShortcuts={() => setIsShortcutsOpen(true)}
+      currentUser={currentUser}
+      onOpenAuth={() => setIsAuthModalOpen(true)}
+      onLogout={handleLogout}
+      onOpenGitHub={() => setIsGitHubModalOpen(true)}
+      isGitHubConnected={isGitHubConnected}
+      githubUsername={githubUsername}
     >
       {isLoading ? (
         <div className="flex h-64 w-full items-center justify-center gap-2 text-muted">
@@ -886,6 +946,29 @@ export default function App() {
       <KeyboardShortcutsModal
         isOpen={isShortcutsOpen}
         onClose={() => setIsShortcutsOpen(false)}
+      />
+
+      {/* Authentication Modal */}
+      <AuthModal
+        isOpen={isAuthModalOpen}
+        onClose={() => setIsAuthModalOpen(false)}
+        onSuccess={(user) => {
+          setCurrentUser(user);
+          showToast(`Signed in as ${user.name}`);
+          loadGitHubStatus();
+        }}
+      />
+
+      {/* GitHub Integration Modal */}
+      <GitHubConnectModal
+        isOpen={isGitHubModalOpen}
+        onClose={() => setIsGitHubModalOpen(false)}
+        sessionId={data.candidate.submissionId}
+        onRepoSelected={() => {
+          loadGitHubStatus();
+          fetchAssessment(currentSubmissionId).then((refreshed) => setData(refreshed));
+        }}
+        showToast={showToast}
       />
 
       {/* Toast Notification */}

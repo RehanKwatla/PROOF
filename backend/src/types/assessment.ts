@@ -272,3 +272,19 @@ export const LoginRequestSchema = z.object({
   password: z.string().min(4),
 });
 export type LoginRequest = z.infer<typeof LoginRequestSchema>;
+
+export const RegisterRequestSchema = z.object({
+  name: z.string().min(2, 'Name must be at least 2 characters'),
+  email: z.string().email('Valid email is required'),
+  password: z.string().min(6, 'Password must be at least 6 characters'),
+  role: z.enum(['candidate', 'recruiter']).default('candidate'),
+});
+export type RegisterRequest = z.infer<typeof RegisterRequestSchema>;
+
+export const SelectRepoRequestSchema = z.object({
+  repoFullName: z.string().min(1, 'Repository full name is required'),
+  defaultBranch: z.string().optional().default('main'),
+  sessionId: z.string().optional(),
+});
+export type SelectRepoRequest = z.infer<typeof SelectRepoRequestSchema>;
+

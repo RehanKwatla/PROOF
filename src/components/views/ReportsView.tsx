@@ -83,7 +83,7 @@ export function ReportsView({
   ];
 
   return (
-    <div className="flex min-h-0 flex-1 flex-col space-y-4 overflow-y-auto pb-4">
+    <div className="flex w-full min-h-0 flex-col space-y-5 pb-12">
       {/* Report Header */}
       <div className="flex flex-col gap-4 rounded-card border border-line bg-surface p-5 shadow-card sm:flex-row sm:items-center sm:justify-between sm:p-6">
         <div>

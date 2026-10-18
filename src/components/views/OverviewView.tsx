@@ -20,7 +20,7 @@ export function OverviewView({ data, onNavigate }: OverviewViewProps) {
   const { candidate, summary, finding } = data;
 
   return (
-    <div className="flex min-h-0 flex-1 flex-col space-y-4 overflow-y-auto pb-4">
+    <div className="flex w-full min-h-0 flex-col space-y-5 pb-12">
       {/* Hero Welcome & Mission Brief */}
       <div className="rounded-card border border-line bg-surface p-5 shadow-card sm:p-6">
         <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">

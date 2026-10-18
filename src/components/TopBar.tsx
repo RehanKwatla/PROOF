@@ -1,6 +1,9 @@
 import {
   Download,
+  Github,
   Keyboard,
+  LogIn,
+  LogOut,
   Menu,
   Moon,
   PanelLeftClose,
@@ -8,6 +11,7 @@ import {
   Share2,
   Sun,
 } from 'lucide-react';
+import type { AuthUserProfile } from '../lib/api';
 import type { CandidateInfo } from '../types/assessment';
 import { QuietButton } from './Panel';
 
@@ -23,6 +27,11 @@ interface TopBarProps {
   sidebarCollapsed?: boolean;
   onToggleSidebar?: () => void;
   onOpenShortcuts?: () => void;
+  currentUser?: AuthUserProfile | null;
+  onOpenAuth?: () => void;
+  onLogout?: () => void;
+  onOpenGitHub?: () => void;
+  isGitHubConnected?: boolean;
 }
 
 const navLabels: Record<string, string> = {
@@ -49,12 +58,17 @@ export function TopBar({
   sidebarCollapsed = false,
   onToggleSidebar,
   onOpenShortcuts,
+  currentUser,
+  onOpenAuth,
+  onLogout,
+  onOpenGitHub,
+  isGitHubConnected = false,
 }: TopBarProps) {
   const currentNavTitle = navLabels[activeNav] || 'Evidence Inspector';
   const crumbs = ['Assessments', candidate.assessment, currentNavTitle];
 
   return (
-    <header className="flex h-[52px] shrink-0 items-center gap-3.5 border-b border-line bg-surface px-4 sm:px-5">
+    <header className="flex h-[52px] shrink-0 items-center gap-3 border-b border-line bg-surface px-4 sm:px-5">
       {/* Mobile drawer toggle */}
       <button
         type="button"
@@ -119,6 +133,23 @@ export function TopBar({
       </span>
 
       <div className="ml-auto flex shrink-0 items-center gap-2">
+        {/* GitHub Integration Action */}
+        {onOpenGitHub ? (
+          <button
+            type="button"
+            onClick={onOpenGitHub}
+            title={isGitHubConnected ? 'GitHub connected (Click to manage)' : 'Connect GitHub account'}
+            className="flex min-h-[32px] items-center gap-1.5 rounded-[6px] border border-line bg-surface px-2.5 py-1 text-[12px] font-medium text-ink transition-colors hover:bg-surface-2 focus-visible:ring-2 focus-visible:ring-accent"
+          >
+            <Github size={15} />
+            <span className="hidden md:inline">GitHub</span>
+            <span
+              className={`h-2 w-2 rounded-full ${isGitHubConnected ? 'bg-success' : 'bg-muted/50'}`}
+              title={isGitHubConnected ? 'Connected' : 'Disconnected'}
+            />
+          </button>
+        ) : null}
+
         <QuietButton icon={Download} onClick={onExport} title="Download evaluation report as PDF (Press E)">
           <span className="hidden sm:inline">Export Report (PDF)</span>
           <span className="sm:hidden">PDF</span>
@@ -155,15 +186,40 @@ export function TopBar({
           )}
         </button>
 
+        {/* User Profile / Auth Button */}
         <div className="ml-1 flex items-center gap-2 border-l border-line pl-2.5">
-          <button
-            type="button"
-            onClick={onOpenSwitcher}
-            title={`Active: ${candidate.name} (Click to switch)`}
-            className="flex h-8 w-8 items-center justify-center rounded-full bg-ink text-[12px] font-bold text-surface ring-2 ring-transparent transition-all hover:ring-accent focus-visible:ring-2 focus-visible:ring-accent"
-          >
-            {candidate.initials}
-          </button>
+          {currentUser ? (
+            <div className="flex items-center gap-1.5">
+              <button
+                type="button"
+                onClick={onOpenSwitcher}
+                title={`Logged in: ${currentUser.name} (${currentUser.role}) · Click to switch assessment`}
+                className="flex h-8 w-8 items-center justify-center rounded-full bg-ink text-[12px] font-bold text-surface ring-2 ring-transparent transition-all hover:ring-accent focus-visible:ring-2 focus-visible:ring-accent"
+              >
+                {currentUser.initials}
+              </button>
+              {onLogout ? (
+                <button
+                  type="button"
+                  onClick={onLogout}
+                  title="Sign Out"
+                  aria-label="Sign out"
+                  className="hidden rounded p-1 text-muted hover:bg-surface-2 hover:text-ink sm:block"
+                >
+                  <LogOut size={14} />
+                </button>
+              ) : null}
+            </div>
+          ) : (
+            <button
+              type="button"
+              onClick={onOpenAuth}
+              className="flex items-center gap-1.5 rounded-[6px] bg-accent px-3 py-1.5 text-[12px] font-semibold text-white shadow-sm transition-colors hover:bg-accent/90"
+            >
+              <LogIn size={13} />
+              <span>Sign In</span>
+            </button>
+          )}
         </div>
       </div>
     </header>

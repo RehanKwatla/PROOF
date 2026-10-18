@@ -56,7 +56,7 @@ export function FeedbackView({ data }: FeedbackViewProps) {
   ];
 
   return (
-    <div className="flex min-h-0 flex-1 flex-col space-y-4 overflow-y-auto pb-4">
+    <div className="flex w-full min-h-0 flex-col space-y-5 pb-12">
       {/* Header Banner */}
       <div className="rounded-card border border-line bg-surface p-5 shadow-card sm:p-6">
         <div className="flex items-start gap-4">

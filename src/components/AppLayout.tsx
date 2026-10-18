@@ -1,6 +1,7 @@
 import { useEffect } from 'react';
 import { X } from 'lucide-react';
 import type { ReactNode } from 'react';
+import type { AuthUserProfile } from '../lib/api';
 import type { CandidateInfo, NavItemId } from '../types/assessment';
 import { Sidebar } from './Sidebar';
 import { TopBar } from './TopBar';
@@ -21,6 +22,12 @@ interface AppLayoutProps {
   sidebarCollapsed?: boolean;
   onToggleSidebar?: () => void;
   onOpenShortcuts?: () => void;
+  currentUser?: AuthUserProfile | null;
+  onOpenAuth?: () => void;
+  onLogout?: () => void;
+  onOpenGitHub?: () => void;
+  isGitHubConnected?: boolean;
+  githubUsername?: string | null;
   children: ReactNode;
 }
 
@@ -40,6 +47,12 @@ export function AppLayout({
   sidebarCollapsed = false,
   onToggleSidebar,
   onOpenShortcuts,
+  currentUser,
+  onOpenAuth,
+  onLogout,
+  onOpenGitHub,
+  isGitHubConnected = false,
+  githubUsername,
   children,
 }: AppLayoutProps) {
   useEffect(() => {
@@ -66,6 +79,12 @@ export function AppLayout({
           onBack={onBack}
           collapsed={sidebarCollapsed}
           onToggleCollapse={onToggleSidebar}
+          currentUser={currentUser}
+          onOpenAuth={onOpenAuth}
+          onLogout={onLogout}
+          onOpenGitHub={onOpenGitHub}
+          isGitHubConnected={isGitHubConnected}
+          githubUsername={githubUsername}
         />
       </aside>
 
@@ -92,6 +111,12 @@ export function AppLayout({
               }}
               onCloseDrawer={onCloseSidebar}
               drawer
+              currentUser={currentUser}
+              onOpenAuth={onOpenAuth}
+              onLogout={onLogout}
+              onOpenGitHub={onOpenGitHub}
+              isGitHubConnected={isGitHubConnected}
+              githubUsername={githubUsername}
             />
           </div>
           <button
@@ -118,12 +143,25 @@ export function AppLayout({
           sidebarCollapsed={sidebarCollapsed}
           onToggleSidebar={onToggleSidebar}
           onOpenShortcuts={onOpenShortcuts}
+          currentUser={currentUser}
+          onOpenAuth={onOpenAuth}
+          onLogout={onLogout}
+          onOpenGitHub={onOpenGitHub}
+          isGitHubConnected={isGitHubConnected}
         />
-        <main className="flex min-h-0 flex-1 flex-col overflow-y-auto xl:overflow-hidden">
-          <div className="flex w-full min-h-0 flex-1 flex-col px-3 py-2.5 sm:px-4 sm:py-3">
-            {children}
-          </div>
-        </main>
+        {activeNav === 'evidence-inspector' || activeNav === 'decision-graph' || activeNav === 'buildtrail' ? (
+          <main className="flex min-h-0 flex-1 flex-col overflow-y-auto xl:overflow-hidden">
+            <div className="flex w-full min-h-0 flex-1 flex-col px-3 py-2.5 sm:px-4 sm:py-3">
+              {children}
+            </div>
+          </main>
+        ) : (
+          <main className="flex min-h-0 flex-1 flex-col overflow-y-auto overscroll-contain">
+            <div className="flex w-full min-h-0 flex-col px-3 py-3 sm:px-6 sm:py-4">
+              {children}
+            </div>
+          </main>
+        )}
       </div>
     </div>
   );

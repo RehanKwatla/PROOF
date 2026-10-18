@@ -5,6 +5,7 @@ import { errorHandler } from './middleware/errorHandler.js';
 import assessmentRoutes from './routes/assessmentRoutes.js';
 import authRoutes from './routes/authRoutes.js';
 import candidateRoutes from './routes/candidateRoutes.js';
+import githubRoutes from './routes/githubRoutes.js';
 import sessionRoutes from './routes/sessionRoutes.js';
 
 export function createApp(): Express {
@@ -54,6 +55,7 @@ export function createApp(): Express {
   });
 
   // Mount API routes
+  app.use('/api/auth/github', githubRoutes);
   app.use('/api/auth', authRoutes);
   app.use('/api/assessments', assessmentRoutes);
   app.use('/api/candidates', candidateRoutes);

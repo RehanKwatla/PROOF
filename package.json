@@ -9,6 +9,7 @@
     "seed": "npm --prefix backend run seed",
     "build": "tsc --noEmit && vite build",
     "preview": "vite preview",
+    "test": "npm --prefix backend run test",
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
