@@ -61,6 +61,10 @@ router.get('/callback', async (req, res, next) => {
     frontendUrl.searchParams.set('username', result.username);
     res.redirect(frontendUrl.toString());
   } catch (err: any) {
+    console.error('[OAuth Callback Error]:', err);
+    if (req.headers.accept?.includes('application/json') && !req.headers.accept?.includes('text/html')) {
+      return res.status(500).json({ error: err.message || 'OAuth callback failed' });
+    }
     const frontendUrl = new URL(config.CORS_ORIGIN.split(',')[0]);
     frontendUrl.searchParams.set('github_error', err.message || 'OAuth callback failed');
     res.redirect(frontendUrl.toString());

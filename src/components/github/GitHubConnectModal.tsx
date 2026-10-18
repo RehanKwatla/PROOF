@@ -19,7 +19,9 @@ import {
   apiGetGitHubAuthUrl,
   apiGetGitHubRepos,
   apiGetGitHubStatus,
+  apiLogin,
   apiSelectGitHubRepo,
+  getAuthToken,
   type GitHubRepoItem,
 } from '../../lib/api';
 
@@ -58,6 +60,12 @@ export function GitHubConnectModal({
     setIsLoading(true);
     setError(null);
     try {
+      if (!getAuthToken()) {
+        setIsConnected(false);
+        setAccount(null);
+        setRepos([]);
+        return;
+      }
       const status = await apiGetGitHubStatus();
       setIsConnected(status.connected);
       setAccount(status.account);
@@ -81,6 +89,9 @@ export function GitHubConnectModal({
     setIsConnecting(true);
     setError(null);
     try {
+      if (!getAuthToken()) {
+        await apiLogin({ email: 'candidate@proof.dev', password: 'password123' });
+      }
       const { url } = await apiGetGitHubAuthUrl();
       // Redirect browser to OAuth authorization URL
       window.location.href = url;

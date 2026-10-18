@@ -198,7 +198,7 @@ model GitHubAccount {
   id             String    @id @default(cuid())
   userId         String    @unique
   user           User      @relation(fields: [userId], references: [id], onDelete: Cascade)
-  githubId       String    @unique
+  githubId       String
   username       String
   displayName    String?
   avatarUrl      String?
