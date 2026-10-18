@@ -174,6 +174,7 @@ export interface AssessmentData {
     edges: GraphEdgeSpec[];
   };
   summary: SummaryMetric[];
+  summaryMetrics?: SummaryMetric[];
 }
 
 export type DiffTab = 'evidence' | 'diff' | 'tests' | 'ai';
